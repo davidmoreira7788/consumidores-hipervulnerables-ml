@@ -1,0 +1,12 @@
+# Análisis de datos y preprocesamiento
+pandas
+numpy
+scipy
+matplotlib
+scikit-learn
+jupyter
+# Requeridos por la plantilla Cookiecutter Data Science (config.py, módulos auxiliares)
+loguru
+python-dotenv
+tqdm
+typer
