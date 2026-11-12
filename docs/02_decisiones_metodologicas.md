@@ -1,168 +1,166 @@
 # Decisiones metodológicas y de preprocesamiento
 
-Decisiones de diseño y de preprocesamiento, con su justificación, la evidencia del dataset y dónde verla. Los
-números salen del notebook
-[`1.0-dm-eda-y-preprocesamiento.ipynb`](../notebooks/1.0-dm-eda-y-preprocesamiento.ipynb). Hasta acá **no se
-entrena ningún modelo**: lo que se justifica es la preparación de los datos.
+Decisiones de diseño del problema y de preparación de los datos, con su justificación y la evidencia del dataset.
+Los números salen del notebook
+[`1.0-dm-eda-y-preprocesamiento.ipynb`](../notebooks/1.0-dm-eda-y-preprocesamiento.ipynb) (las secciones se indican
+entre paréntesis). Los resultados de los modelos están en [`03_modelado_y_resultados.md`](03_modelado_y_resultados.md).
 
-## 1. Concentración de reclamos ≠ exposición al problema
+## 1. Qué se puede afirmar con estos datos
 
-**Decisión.** Los resultados se formulan como **asociaciones dentro de los reclamos registrados** entre enero de
-2021 y diciembre de 2022. No se afirma que un grupo esté «más expuesto» o «más afectado».
+**Decisión.** Los resultados se formulan como **asociaciones dentro de los reclamos registrados** entre enero de 2021
+y diciembre de 2022. No se afirma que un grupo esté «más expuesto» o «más afectado», ni se atribuyen causas.
 
 **Por qué.** El dataset solo contiene personas que reclamaron. No hay información de quienes no reclamaron ni de
 cuántas personas de cada grupo consumen cada servicio.
 
-**Hipótesis.** Cuando se observa un patrón (por ejemplo, que entre los reclamos de «Salud»
+**Hipótesis, no conclusiones.** Cuando se observa un patrón (por ejemplo, que entre los reclamos de «Salud»
 predomina el rubro Servicios de Salud), las explicaciones posibles se plantean como hipótesis a confirmar con
-información adicional, no como hechos. Esto se aplica a todo el trabajo.
+información adicional, no como hechos. Esto se aplica a todo el trabajo (sección 9).
 
-Notebook: sección 9.
+## 2. Uso previsto y momento de la predicción
 
-## 2. Alcance de la predicción y variables disponibles
-
-**Decisión.** El escenario principal clasifica un reclamo **al momento de ingresarlo** con: `vulnerabilidad`,
-`edad`, `genero` y `provincia_consumidor`. **No** usa mes ni año de tratamiento, ni el motivo.
-
-**Por qué.**
-- La fecha del dataset es de *tratamiento*; no se sabe si está disponible al ingresar el reclamo.
-- La asociación de `mes` y de `anio` con el rubro es baja (V de Cramér 0,071 y 0,109), menor que la de
-  `vulnerabilidad` (0,290).
-- Se descarta también `provincia_id`, porque equivale uno a uno a `provincia_consumidor`.
-
-**Qué queda para la etapa de modelado.** Comprobar con un modelo si agregar mes y año mejora los resultados, como análisis
-de sensibilidad presentado por separado y aclarando que responde a otra pregunta. Hasta entonces la decisión se
-apoya en la disponibilidad dudosa y en la asociación baja, no en un resultado de modelo.
-
-Notebook: secciones 9, 10 y 13.
-
-### Momento de la predicción
-
-El modelo se piensa para usarse **cuando se ingresa un reclamo**, con el perfil de la persona y antes de conocer
-su rubro. Es un **supuesto**: el diccionario de la ficha no describe las columnas y no se pudo confirmar que esas variables estén
-disponibles en ese momento ni cómo se asigna el rubro. Una **hipótesis** sobre su utilidad es que anticipar el
+**Uso previsto (supuesto):** clasificar un reclamo **cuando se ingresa**, con el perfil de la persona y antes de
+conocer su rubro. El supuesto no está confirmado: el diccionario de la ficha solo da nombre y tipo de cada columna y
+no explica cuándo ni cómo se registra cada dato. Una **hipótesis** sobre la utilidad del modelo es que anticipar el
 rubro podría ayudar a orientar o derivar el reclamo; con estos datos no se puede comprobar.
 
-Para evaluar el modelo contra la realidad habría que comparar sus predicciones con el rubro finalmente registrado
-en reclamos nuevos; este dataset histórico no lo permite, por lo que la evaluación se hará con un conjunto de
-prueba separado de los mismos datos.
+**Qué variables se pueden usar** depende de si estarán disponibles en ese momento (sección 12):
 
-### ¿El dataset permite responder la pregunta?
+| Variable | Decisión | Motivo |
+|---|---|---|
+| `edad`, `genero`, `provincia_consumidor` | Se usan | Datos de la persona; se supone que están al ingresar el reclamo |
+| `vulnerabilidad` | **Dos escenarios** (A con ella, B sin ella) | Disponibilidad **no confirmada** (ver 2.1) |
+| `motivo` | No se usa | Puede no estar disponible o revelar el rubro |
+| `mes_anio_tratamiento` | No se usa como predictora | Es fecha de *tratamiento*, no necesariamente de ingreso |
+| `provincia_id` | No se usa | Equivale uno a uno a `provincia_consumidor` |
 
-Solo en parte. `vulnerabilidad` tiene una asociación moderada con el rubro (V de Cramér 0,290); `genero`,
-`provincia_consumidor` y las variables temporales tienen asociaciones más bajas (sección 9 del notebook). Con
-solo perfil y territorio es esperable que quede una parte importante sin explicar, porque el rubro depende de lo
-que se consumió y no del perfil. Es una limitación que se informa; se verá con el modelo cuánto se puede anticipar.
+Las exclusiones son **por disponibilidad o por redundancia exacta**. Ninguna variable se excluye por tener una
+asociación baja con el rubro: una asociación individual baja no demuestra que la variable sea inútil combinada con
+otras. Si hubiera que decidir por capacidad predictiva, se hace **dentro del entrenamiento** (validación cruzada), no
+con el conjunto completo.
 
-## 3. Agrupación de rubros
+### 2.1 La vulnerabilidad
 
-**Criterio (fijado antes de entrenar):** clase propia para todo rubro con **al menos 100 reclamos**; el resto se
-agrupa en `Otros`. Usa solo la frecuencia de la etiqueta, no las variables predictoras.
+La ficha del dataset indica que el organismo **detecta** la condición de vulnerabilidad, sin aclarar cuándo ni cómo.
+Categorías como «Salud» o «Turista» podrían asignarse a partir de la situación que originó el reclamo. Si la
+vulnerabilidad se determina **después** de analizar o clasificar el reclamo, usarla como predictora introduciría
+información que no existiría en el momento de la predicción.
 
-| Umbral | Clases propias | Registros en «Otros» | % en «Otros» | Clase propia más chica |
-|---|---|---|---|---|
-| 30 | 20 | 258 | 4,0 | 33 |
-| 50 | 15 | 451 | 7,0 | 54 |
-| **100** | **10 (+ Otros = 11 clases)** | **775** | **12,0** | **110** |
-| 150 | 7 | 1.173 | 18,2 | 192 |
-| 200 | 6 | 1.365 | 21,1 | 245 |
+Que la vulnerabilidad esté asociada con el rubro **no demuestra** que haya fuga de información; lo que falta es
+confirmar cuándo se registra. Mientras tanto:
+- **Escenario A** (con vulnerabilidad): se presenta como **condicionado** a que esté disponible al ingresar el reclamo.
+- **Escenario B** (sin vulnerabilidad): no depende de ese supuesto y se presenta como comparación.
+- Se informan los dos, sin elegir uno por su rendimiento. Para confirmar el momento de registro hay que consultar al
+  organismo (contacto en [`01_descripcion_dataset.md`](01_descripcion_dataset.md)).
 
-**Comprobación de casos por clase** (partición estratificada 75/25, semilla 42): mínimo de 82 casos en
-entrenamiento y 28 en prueba («Equipos de telefonía»). La estratificación conserva las proporciones pero no
-agrega ejemplos: las clases chicas tendrán métricas inestables y se reportan por clase con esa advertencia.
+## 3. Partición entrenamiento / prueba
 
-**Agrupar cambia el problema.** Con `Otros` ya no se clasifica entre todos los rubros, sino entre los 10 más
-frecuentes y «cualquier otro». El umbral de 100 es una regla práctica de tamaño mínimo de muestra, **fijada antes
-de entrenar** y no elegida para mejorar métricas; no proviene de una fuente oficial, y por eso se verifica con
-otros umbrales. Toda decisión de este tipo debe quedar justificada con los datos o con una fuente, no con el
-resultado del modelo.
+**Decisión.** Partición **aleatoria estratificada por rubro**, 75 % entrenamiento (4.842 reclamos) y 25 % prueba
+(1.615), semilla 42 (sección 6).
 
-**Qué se pierde.** `Otros` reúne 37 rubros distintos y es heterogénea; su resultado no se interpreta como un rubro
-concreto. En la etapa de modelado se comparará con los umbrales 50 y 200 como análisis de sensibilidad.
+**Qué evalúa.** Una partición aleatoria sirve para evaluar el modelo con reclamos de una distribución parecida a la de
+la muestra histórica. **No comprueba** que el modelo generalice a reclamos de períodos posteriores: un modelo puede
+aplicarse a reclamos futuros aunque no incluya el tiempo entre sus predictoras.
 
-Notebook: secciones 5, 6 y 7.
+**Evaluación temporal complementaria.** Se entrena con los reclamos de 2021 y se evalúa con los de 2022. Tiene una
+limitación propia: la fecha del dataset es la de *tratamiento* y no necesariamente la de ingreso, por lo que es una
+aproximación a la generalización hacia el futuro.
 
-## 4. Modelo de referencia con la clasificación definitiva
+**Dependencia entre reclamos.** Se asume que los reclamos son observaciones independientes, algo que no se puede
+verificar (no hay identificador de persona ni de reclamo). Ver el punto 5.
 
-**Decisión.** El 28 % que se mencionó al plantear el proyecto corresponde a los rubros sin agrupar. Con la clasificación
-definitiva, el modelo de referencia se define así y **se calculará en la etapa de modelado**:
-1. Elegir la clase mayoritaria **con el conjunto de entrenamiento** (hoy: «Servicios financieros y seguros»).
-2. Predecir esa clase para todo el conjunto de prueba.
-3. Calcular las **mismas métricas** que para los otros modelos (exactitud, exactitud balanceada, F1 macro y
-   métricas por clase).
+## 4. Definición de las clases de rubro
 
-**Dato descriptivo disponible hoy** (no es un modelo): esa clase representa 27,7 % del conjunto de prueba.
+**Decisión.** La lista de rubros que se conservan como clase propia se calcula **solo con el conjunto de
+entrenamiento** y se mantiene fija al evaluar. Se conserva todo rubro que represente al menos el **1,5 %** de los
+reclamos de entrenamiento (unos 73); el resto se agrupa en `Otros`. Un rubro de prueba que no esté en la lista pasa a
+`Otros` (sección 7).
 
-Superar la exactitud del modelo de referencia no basta: un modelo puede acertar más en total sin identificar mejor
-las clases minoritarias. Por eso se evaluará principalmente con F1 macro, exactitud balanceada y métricas por clase.
+**Por qué este cambio.** Calcular la lista con todo el dataset hacía intervenir las etiquetas de prueba en la
+definición del problema, aunque se hubiera fijado «antes de entrenar».
 
-Notebook: sección 7.
+**Resultado.** 10 clases propias más `Otros` (11 clases): Servicios financieros y seguros, Servicios de
+comunicaciones, Servicios de Salud, Servicios públicos domiciliarios, Electrodomésticos y artefactos para el hogar,
+Servicios turísticos, Rodados automotores y embarcaciones, Servicio de administración de pagos, Servicios de
+transporte aéreo y Equipos de telefonía. La clase propia más chica tiene 82 casos de entrenamiento y 28 de prueba.
+En entrenamiento, `Otros` reúne 12,0 % de los reclamos.
 
-## 5. Ponderación del desbalance: `class_weight` vs `weights` en K-NN
+**Agrupar cambia el problema.** Con `Otros` ya no se clasifica entre todos los rubros, sino entre los más frecuentes
+y «cualquier otro». El 1,5 % es una regla práctica de tamaño mínimo de muestra (con validación cruzada de 5
+particiones, una clase de ese tamaño deja unos 15 casos para validar en cada una), no una fuente oficial.
 
-- **Regresión Logística y Árbol de Decisión:** admiten `class_weight` (por ejemplo, `"balanced"`) para ponderar
-  clases.
-- **K-NN (`KNeighborsClassifier`):** no tiene `class_weight`. Su parámetro `weights` (`"uniform"` o
-  `"distance"`) solo pondera el **voto de los vecinos** (por ejemplo, según su distancia) y **no equivale** a
-  ponderar clases.
-- **Implementación prevista:** K-NN se evalúa sin ponderación de clases y se reporta su comportamiento en las
-  clases minoritarias. Si se prueba un remuestreo para compensar el desbalance, se aplicará **solo al
-  conjunto de entrenamiento** (nunca a la prueba) y se describirá aparte. `weights` se presentará como un
-  hiperparámetro distinto.
-- Verificar la sintaxis y los parámetros en la documentación vigente de scikit-learn antes de implementar.
+**Otros umbrales.** Comparar 1 %, 1,5 % y 2 % **modifica las clases**: con más clases propias la tarea es más difícil
+y con menos se simplifica. Una mejora de métricas entre umbrales no significa que el modelo haya mejorado. Por eso cada
+variante se compara con **su propio modelo de referencia** y se informa la ganancia sobre esa referencia.
+
+**Qué se pierde.** `Otros` es heterogénea (37 rubros con pocos casos cada uno); su resultado no se interpreta como un
+rubro concreto.
+
+## 5. Repeticiones de filas
+
+**Hecho.** 173 filas son idénticas a otra (336 filas en grupos repetidos). Podrían ser reclamos distintos con el mismo
+perfil, así que **no se eliminan** automáticamente (sección 4).
+
+**Alcance entre conjuntos.** Con la partición aleatoria, **64 reclamos de prueba (4,0 %)** tienen una fila completa
+idéntica en entrenamiento, repartidas en 61 grupos (sección 6). El modelo podría «reconocerlas» y el resultado verse
+algo mejor de lo real.
+
+**Análisis de sensibilidad.** Se repite la evaluación manteniendo juntas las filas idénticas al separar. Esto **no
+identifica personas** ni resuelve toda posible dependencia, y no se asume que dos reclamos con el mismo perfil
+pertenezcan a la misma persona.
 
 ## 6. El motivo del reclamo
 
-**Evidencia.** En el dataset, 25 de los 49 motivos aparecen siempre con un único rubro (cubren 14,1 % de los
-reclamos); por ejemplo, «Cancelación o supresión de vuelos» (solo transporte aéreo) o «Baja de efectores y/o
-profesionales de la cartilla de prestaciones médicas» (solo Servicios de Salud). Otros son genéricos: «Prácticas
-Abusivas» o «Problemas de fraude o estafa» aparecen en 26 rubros distintos cada uno. La pureza ponderada es 0,495:
-en promedio, conociendo el motivo se acierta el rubro más frecuente de ese motivo en cerca de la mitad de los
-reclamos. Notebook: sección 11.
+**Evidencia** (solo entrenamiento, sección 11): 24 de los 47 motivos aparecen siempre con un único rubro (cubren
+16,9 % de los reclamos); por ejemplo, «Cancelación o supresión de vuelos» (solo transporte aéreo). Otros son
+genéricos y aparecen en muchos rubros. La pureza ponderada es 0,498: conociendo el motivo, el rubro más frecuente de
+ese motivo acierta en cerca de la mitad de los reclamos.
 
-**Decisión.** El análisis principal **no usa el motivo**. Si se incluye, será un escenario complementario que
-responde a otra pregunta (clasificar el rubro a partir del motivo y el perfil) y se presentará con esta
-limitación. Queda pendiente confirmar con la fuente cómo se registra (ver pregunta abierta 3 en el documento 01).
+**Decisión.** El análisis principal **no usa el motivo**, por disponibilidad y posible fuga de información. Si se
+incluyera, sería un escenario complementario que responde a otra pregunta (clasificar el rubro a partir del motivo y el
+perfil).
 
-## 7. Preprocesamiento para el modelado
+## 7. Preprocesamiento
 
-Todo lo que sigue está en la sección 13 del notebook, con comentarios en cada paso.
+Todo está en la sección 13 del notebook 1.0, con comentarios en cada paso. El código reutilizable está en
+`consumidores_hipervulnerables/features.py`.
 
 | Paso | Qué se hace | Por qué |
 |---|---|---|
-| Partición | 75 % entrenamiento / 25 % prueba, estratificada por rubro agrupado, semilla 42 | Evaluar con datos que el modelo no vio y conservar la proporción de cada clase |
-| Codificación | One-hot de `vulnerabilidad`, `genero` y `provincia_consumidor`; categorías con menos de 5 casos en entrenamiento se agrupan como «infrecuente» | Los modelos necesitan números; evita columnas casi vacías |
-| Escalado | Estandarización de `edad` (media 0, desvío 1 en entrenamiento) | Poner la edad en una escala comparable con las columnas 0/1; importa para modelos basados en distancias, como K-NN |
-| Ajuste | Las transformaciones se ajustan solo con el entrenamiento y se aplican a la prueba | Evitar que la prueba influya en el preprocesamiento |
+| Codificación | One-hot de `vulnerabilidad` (solo escenario A), `genero` y `provincia_consumidor`; categorías con menos de 5 casos se agrupan como «infrecuente» | Los modelos necesitan números; evita columnas casi vacías |
+| Escalado | Estandarización de `edad` | Poner la edad en una escala comparable con las columnas 0/1; importa para K-NN |
+| Ajuste | Se ajusta solo con el entrenamiento y se aplica a la prueba | Evitar que la prueba influya en el preprocesamiento |
 
-**Por qué la partición es aleatoria.** El modelo no predice períodos futuros (no usa variables temporales), por lo
-que no hace falta una partición cronológica. Se asume que los reclamos son observaciones independientes; no se
-puede verificar (no hay identificador de persona ni de reclamo) y, si una misma persona figura más de una vez o hay
-filas repetidas entre entrenamiento y prueba, el resultado podría verse algo mejor de lo real. Además, los datos
-cubren solo 2021-2022 y no se evalúa con períodos posteriores.
+**El escalado no sirve para eliminar redundancia ni correlación entre variables**; solo lleva las variables a una escala
+común.
 
-**Aclaración conceptual.** Escalar variables sirve para llevarlas a una escala común; **no** sirve para eliminar
-redundancia ni correlación entre variables predictoras. La posible redundancia entre `edad` y `vulnerabilidad`
-(por ejemplo, «Adulto/a mayor») se señala como limitación, no se resuelve con el escalado.
+**Cómo se conserva el procedimiento.**
+- El **preprocesador ajustado** se guarda con `joblib` en `models/` (`preprocesador_escenario_A.joblib` y
+  `preprocesador_escenario_B.joblib`) para transformar reclamos nuevos de la misma manera.
+- Para la validación cruzada, el preprocesador va **dentro de un `Pipeline`**: en cada partición se vuelve a ajustar solo
+  con los datos de entrenamiento de esa partición. Usar una matriz ya transformada con todo el entrenamiento haría que
+  las categorías y el escalado conocieran los datos de validación.
+- Los CSV de `data/processed/` (`X_train_A/B`, `X_test_A/B`, `y_train`, `y_test`) sirven para inspeccionar el resultado
+  de la transformación, pero **no se usan para validar**.
+- Los archivos `.joblib` dependen de la versión de scikit-learn (1.9.1 en este trabajo).
 
-**Resultado.** 4.842 filas de entrenamiento y 1.615 de prueba con 39 columnas predictoras, guardadas en
-`data/processed/` (`X_train.csv`, `X_test.csv`, `y_train.csv`, `y_test.csv`). Sin valores faltantes.
+Resultado: escenario A, 41 columnas; escenario B, 28 columnas; sin valores faltantes.
 
-## 8. Registros repetidos
+## 8. Modelo de referencia y desbalance
 
-No se eliminan (no hay identificador de reclamo). Se informa cuántos son (173 filas idénticas a otra) y se
-interpreta como limitación.
+**Modelo de referencia.** Predecir siempre la clase mayoritaria **del entrenamiento** («Servicios financieros y
+seguros») y evaluarla en la prueba con **las mismas métricas** que los modelos. Superar la exactitud no basta: un
+modelo puede acertar más en total sin identificar mejor las clases minoritarias, por eso se evalúa con F1 macro,
+exactitud balanceada y métricas por clase.
 
+**`class_weight` y K-NN.**
+- Regresión Logística y Árbol de Decisión admiten `class_weight` (por ejemplo, `"balanced"`).
+- `KNeighborsClassifier` no tiene `class_weight`. Su parámetro `weights` (`"uniform"` o `"distance"`) solo pondera el
+  voto de los vecinos y **no equivale** a ponderar clases. K-NN se evalúa sin ponderación de clases.
 
-## 9. Próximos pasos
+## 9. Otros límites conocidos
 
-- Entrenar los modelos en un notebook aparte (el de preprocesamiento no incluye modelos) y calcular el modelo de
-  referencia con el procedimiento descrito.
-- Presentar **un modelo final elegido** y explicar cómo resuelve el problema. Los otros modelos probados
-  (Regresión Logística, K-NN, Árbol de Decisión, distintos hiperparámetros) pueden quedar en una sección
-  «modelos probados» del notebook, con un comentario sobre por qué se eligió el final.
-- Reportar métricas por clase con la advertencia sobre el tamaño de las clases chicas.
-- Mostrar una predicción de ejemplo con un reclamo hipotético para ilustrar cómo se usa el modelo.
-- Análisis de sensibilidad (umbrales 50 y 200; escenario con información temporal; escenario con motivo).
-- Interpretar siempre dentro de la población y el período representados en los datos, y plantear las explicaciones
-  como hipótesis.
+- Hay una fuerte concentración geográfica (CABA y Buenos Aires: 75,6 % de los reclamos); en la mayoría de las
+  provincias hay pocos casos.
+- `edad` puede corresponder a quien reclama y no a la persona afectada (hipótesis; no se puede confirmar).
+- Los datos cubren solo 2021-2022.

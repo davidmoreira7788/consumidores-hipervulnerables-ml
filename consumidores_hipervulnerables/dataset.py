@@ -12,6 +12,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 RAW = RAIZ / "data" / "raw" / "consumidores-hipervulnerables.csv"
 INTERIM = RAIZ / "data" / "interim" / "consumidores_normalizado.csv"
 PROCESSED = RAIZ / "data" / "processed"
+MODELOS = RAIZ / "models"
 
 COLUMNAS = [
     "rubro", "motivo", "vulnerabilidad", "mes_anio_tratamiento",
@@ -47,11 +48,49 @@ def normalizar(df):
     return out
 
 
-def agrupar_rubros(rubro, umbral=100, etiqueta="Otros"):
-    """Mantiene los rubros con al menos `umbral` casos y agrupa el resto."""
-    frecuencia = rubro.value_counts()
-    conservar = frecuencia[frecuencia >= umbral].index
+def definir_clases(rubro_entrenamiento, proporcion_minima=0.015):
+    """Rubros que se conservan como clase propia, calculados SOLO con el conjunto de entrenamiento.
+
+    Se conserva todo rubro que represente al menos `proporcion_minima` de los reclamos de entrenamiento
+    (1,5 % de 4.842 reclamos son unos 73). Devuelve la lista de rubros conservados.
+    """
+    frecuencia = rubro_entrenamiento.value_counts()
+    return frecuencia[frecuencia >= proporcion_minima * len(rubro_entrenamiento)].index.tolist()
+
+
+def aplicar_clases(rubro, conservar, etiqueta="Otros"):
+    """Reemplaza por `etiqueta` todo rubro que no esté en la lista `conservar`.
+
+    La lista sale del entrenamiento y se aplica igual a prueba: un rubro que no figura en ella (incluso uno que
+    no aparece en el entrenamiento) pasa a `Otros`.
+    """
     return rubro.where(rubro.isin(conservar), etiqueta)
+
+
+def clave_fila(df):
+    """Texto que identifica a una fila completa (las 8 columnas originales); sirve para detectar repeticiones."""
+    return df[COLUMNAS].astype(str).agg("|".join, axis=1)
+
+
+def etiqueta_estratificacion(rubro, minimo=4):
+    """Etiqueta para estratificar la partición: los rubros con menos de `minimo` casos se juntan en '_raro'.
+
+    Solo se usa para repartir los datos de forma pareja; no define las clases del modelo.
+    """
+    frecuencia = rubro.map(rubro.value_counts())
+    return rubro.where(frecuencia >= minimo, "_raro")
+
+
+def particion_entrenamiento_prueba(df, test_size=0.25, semilla=42):
+    """Partición aleatoria estratificada por rubro (los rubros muy raros se juntan solo para estratificar)."""
+    from sklearn.model_selection import train_test_split
+
+    return train_test_split(
+        df,
+        test_size=test_size,
+        stratify=etiqueta_estratificacion(df["rubro"]),
+        random_state=semilla,
+    )
 
 
 def cramer_v(a, b):

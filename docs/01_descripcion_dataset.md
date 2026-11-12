@@ -67,7 +67,7 @@ columna (solo tiene las 8 columnas descritas abajo).
   Valores posibles (11): Servicios financieros y seguros; Servicios de comunicaciones; Servicios de Salud;
   Servicios públicos domiciliarios; Electrodomésticos y artefactos para el hogar; Servicios turísticos; Rodados
   automotores y embarcaciones; Servicio de administración de pagos; Servicios de transporte aéreo; Equipos de
-  telefonía; y `Otros` (37 rubros con menos de 100 reclamos cada uno).
+  telefonía; y `Otros` (los 37 rubros restantes, cada uno con menos del 1,5 % del entrenamiento).
 - **Columnas que no son predictoras:** `rubro` (es lo que se predice), `motivo`, `mes_anio_tratamiento` (con `mes` y
   `anio`) y `provincia_id`. Los motivos de cada exclusión están en `02_decisiones_metodologicas.md`.
 
@@ -108,10 +108,12 @@ columna (solo tiene las 8 columnas descritas abajo).
 
 ## 6. Dataset procesado para el modelado
 
-El notebook deja listos, en `data/processed/`, los conjuntos de entrenamiento (4.842 filas) y prueba (1.615
-filas) con 39 columnas predictoras: 38 columnas 0/1 de las variables categóricas (`vulnerabilidad`, `genero`,
-`provincia_consumidor`) y la `edad` estandarizada. La variable a predecir es `rubro_agrupado` (10 rubros con al
-menos 100 reclamos + `Otros`). El detalle y la justificación están en `02_decisiones_metodologicas.md`.
+El notebook de preprocesamiento deja en `data/processed/` los conjuntos de entrenamiento (4.842 reclamos) y prueba
+(1.615) ya transformados, para dos escenarios de variables predictoras: **A** (41 columnas: `vulnerabilidad`, `genero`
+y `provincia_consumidor` codificadas en 0/1 y `edad` estandarizada) y **B** (28 columnas: igual, sin
+`vulnerabilidad`). La variable a predecir es `rubro_agrupado` (10 rubros que representan al menos 1,5 % del
+entrenamiento + `Otros`). Los preprocesadores ajustados están en `models/`. El detalle y la justificación están en
+`02_decisiones_metodologicas.md`.
 
 ## 7. Alcance y limitaciones de interpretación
 
@@ -132,4 +134,4 @@ menos 100 reclamos + `Otros`). El detalle y la justificación están en `02_deci
 3. ¿El motivo se elige después de asignar el rubro? (define si revela la respuesta).
 4. La ficha indica que el organismo detecta la vulnerabilidad: ¿con qué criterio concreto? ¿Un reclamo puede tener más de una?
 
-Estas preguntas se pueden consultar al contacto del organismo indicado en la sección 1. (Se manda un email consultando todo esto para un trabajo a futuro)
+Estas preguntas se consultan al contacto del organismo esperando una pronta respuesta.

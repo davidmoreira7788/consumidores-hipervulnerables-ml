@@ -16,7 +16,8 @@ Se probarán esos tres modelos y se presentará en detalle el que se elija como 
 **Tipo de problema:** clasificación **multiclase** (multinomial).
 
 **Momento de la predicción (supuesto):** al ingresar un reclamo, con el perfil de la persona y antes de conocer su
-rubro.
+rubro. Como no está confirmado que la `vulnerabilidad` esté disponible en ese momento, se evalúan **dos escenarios**:
+**A** (con vulnerabilidad, condicionado a ese supuesto) y **B** (sin vulnerabilidad).
 
 > Los resultados se interpretan solo como **asociaciones dentro de los reclamos registrados** en el período
 > cubierto por el dataset. No permiten afirmar qué grupos están más expuestos al problema, porque no hay
@@ -46,14 +47,15 @@ consumidores hipervulnerables).
 
 ### Variable objetivo
 
-`rubro_agrupado`: rubro del bien o servicio reclamado. Los rubros con al menos 100 reclamos son una clase propia y
-el resto se agrupa en `Otros`. Valores posibles (11):
+`rubro_agrupado`: rubro del bien o servicio reclamado. Los rubros que representan al menos el 1,5 % de los reclamos de
+entrenamiento (unos 73) son una clase propia, y el resto se agrupa en `Otros`; la lista se define solo con el
+entrenamiento. Valores posibles (11) y cantidad de reclamos en el dataset completo:
 
 | Valor | Reclamos |
 |---|---|
 | Servicios financieros y seguros | 1.788 |
 | Servicios de comunicaciones | 1.390 |
-| Otros (37 rubros con menos de 100 reclamos cada uno) | 775 |
+| Otros (37 rubros restantes, cada uno con menos del 1,5 % del entrenamiento) | 775 |
 | Servicios de Salud | 740 |
 | Servicios públicos domiciliarios | 621 |
 | Electrodomésticos y artefactos para el hogar | 308 |
@@ -68,7 +70,7 @@ el resto se agrupa en `Otros`. Valores posibles (11):
 | Variable | Tipo | Descripción (inferida; la ficha solo trae nombres y tipos) | Rol |
 |---|---|---|---|
 | `rubro` | categórica | Rubro del bien o servicio reclamado | Variable a predecir (agrupada) |
-| `vulnerabilidad` | categórica | Tipo de vulnerabilidad registrada | Predictora |
+| `vulnerabilidad` | categórica | Tipo de vulnerabilidad registrada (la ficha dice que la detecta el organismo) | Predictora solo en el escenario A |
 | `edad` | numérica | Edad de la persona | Predictora |
 | `genero` | categórica | Género registrado | Predictora |
 | `provincia_consumidor` | categórica | Provincia del consumidor | Predictora |
@@ -78,22 +80,49 @@ el resto se agrupa en `Otros`. Valores posibles (11):
 
 ### Preprocesamiento (resumen)
 
-Normalización de formato, agrupación de rubros, partición estratificada 75/25, codificación one-hot y escalado de
-`edad`. Los datos listos para modelar quedan en `data/processed/` (39 columnas predictoras; 4.842 filas de
-entrenamiento y 1.615 de prueba). El detalle está en el notebook de preprocesamiento y en `docs/`.
+Normalización de formato, partición aleatoria estratificada 75/25, definición de clases con el entrenamiento,
+codificación one-hot y escalado de `edad`. Los datos transformados quedan en `data/processed/` y los preprocesadores
+ajustados en `models/`. El detalle está en el notebook de preprocesamiento y en `docs/`.
+
+## Cómo recorrer el repositorio
+
+1. Este README (resumen y resultados).
+2. `docs/01_descripcion_dataset.md`: origen y descripción de los datos.
+3. `notebooks/1.0-...`: exploración y preprocesamiento (con `docs/02_decisiones_metodologicas.md`).
+4. `notebooks/2.0-...`: modelado y evaluación (con `docs/03_modelado_y_resultados.md`).
+
+## Video explicativo
+
+`Por cargar`
 
 ## Documentación
 
 - [`docs/01_descripcion_dataset.md`](docs/01_descripcion_dataset.md): descripción y origen del dataset.
 - [`docs/02_decisiones_metodologicas.md`](docs/02_decisiones_metodologicas.md): decisiones de diseño y de
   preprocesamiento, con su justificación.
+- [`docs/03_modelado_y_resultados.md`](docs/03_modelado_y_resultados.md): EDA, modelos, hiperparámetros,
+  métricas, interpretación y conclusiones.
 - [`notebooks/1.0-dm-eda-y-preprocesamiento.ipynb`](notebooks/1.0-dm-eda-y-preprocesamiento.ipynb): carga,
   exploración (EDA) y preprocesamiento.
+- [`notebooks/2.0-dm-modelado-y-evaluacion.ipynb`](notebooks/2.0-dm-modelado-y-evaluacion.ipynb): modelo de
+  referencia, búsqueda de hiperparámetros, evaluación y comprobaciones complementarias.
 
 ## Estado del proyecto
 
-Completados: descripción del dataset, exploración y preprocesamiento. Pendiente: entrenamiento y evaluación de
-modelos, modelo de referencia, métricas por clase y conclusiones.
+Completados: descripción del dataset, exploración, preprocesamiento, modelado, evaluación y conclusiones.
+Pendiente: confirmar con el organismo cuándo se registra la vulnerabilidad (define si corresponde el escenario A o el B).
+
+### Resultados principales (conjunto de prueba, 1.615 reclamos)
+
+| Escenario | Modelo final | Exactitud balanceada | F1 macro |
+|---|---|---|---|
+| Referencia (clase mayoritaria) | — | 0,091 | 0,039 |
+| A (con vulnerabilidad, condicionado a que esté disponible) | Regresión Logística | 0,245 | 0,224 |
+| B (sin vulnerabilidad) | Árbol de Decisión | 0,132 | 0,126 |
+
+Los modelos superan a la referencia, pero con capacidad limitada, y las diferencias entre los tres algoritmos son
+pequeñas. La mejora del escenario A podría deberse a cómo se registra la vulnerabilidad (hipótesis, no comprobada).
+El detalle está en [`docs/03_modelado_y_resultados.md`](docs/03_modelado_y_resultados.md).
 
 ## Organización del repositorio
 
@@ -107,9 +136,9 @@ Basada en la plantilla [Cookiecutter Data Science](https://cookiecutter-data-sci
 │   ├── interim        <- Dataset normalizado (generado por el notebook)
 │   ├── processed      <- Conjuntos de entrenamiento y prueba ya preprocesados
 │   └── raw            <- Dataset original, sin modificar
-├── docs               <- Descripción del dataset y decisiones metodológicas (Markdown)
-├── models             <- Modelos entrenados (etapa de modelado)
-├── notebooks          <- 1.0-dm-eda-y-preprocesamiento.ipynb
+├── docs               <- Descripción del dataset, decisiones metodológicas y resultados (Markdown)
+├── models             <- Preprocesadores ajustados y modelos finales (.joblib)
+├── notebooks          <- 1.0 (EDA y preprocesamiento) y 2.0 (modelado y evaluación)
 ├── pyproject.toml
 ├── references         <- Materiales de referencia
 ├── reports
@@ -118,8 +147,9 @@ Basada en la plantilla [Cookiecutter Data Science](https://cookiecutter-data-sci
 └── consumidores_hipervulnerables   <- Código fuente
     ├── __init__.py
     ├── config.py      <- Rutas y configuración (plantilla)
-    ├── dataset.py     <- Carga, normalización y agrupación de rubros
-    ├── features.py    <- (plantilla, sin uso por ahora)
+    ├── dataset.py     <- Carga, normalización, partición y definición de clases
+    ├── features.py    <- Escenarios A/B y construcción del preprocesador
+    ├── evaluacion.py  <- Métricas, métricas por clase e intervalos bootstrap
     ├── plots.py       <- (plantilla, sin uso por ahora)
     └── modeling
         ├── predict.py <- (plantilla, etapa de modelado)
@@ -132,6 +162,7 @@ Basada en la plantilla [Cookiecutter Data Science](https://cookiecutter-data-sci
 pip install -r requirements.txt
 cd notebooks
 jupyter nbconvert --to notebook --execute 1.0-dm-eda-y-preprocesamiento.ipynb
+jupyter nbconvert --to notebook --execute 2.0-dm-modelado-y-evaluacion.ipynb
 ```
 
 El notebook se ejecutó de principio a fin con Python 3, pandas 3.0.5, numpy 2.5.3, scipy 1.18.1,
