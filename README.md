@@ -93,7 +93,7 @@ ajustados en `models/`. El detalle está en el notebook de preprocesamiento y en
 
 ## Video explicativo
 
-`[COMPLETAR: enlace al video de presentación del proyecto]`
+https://drive.google.com/file/d/1GIUDaymV2AEgwDcmumUlf6Zd_HzMKPyi/view?usp=sharing
 
 ## Documentación
 
