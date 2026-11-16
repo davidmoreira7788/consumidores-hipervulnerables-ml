@@ -11,8 +11,8 @@ y se pueden reproducir con él.
 | Fuente | Datos Argentina, Ministerio de Desarrollo Productivo. Programa Consumidores Hipervulnerables |
 | Ficha del dataset | https://datos.gob.ar/dataset/produccion-programa-consumidores-hipervulnerables |
 | Portal de origen | https://datos.produccion.gob.ar/dataset/programa-consumidores-hipervulnerables |
-| Enlace de descarga directa | `[COMPLETAR]` |
-| Fecha de descarga | `[COMPLETAR]` |
+| Enlace de descarga directa | https://datos.produccion.gob.ar/dataset/f6f32192-8b0c-4a3a-a40f-0e782b4eea46/resource/b84b8029-1026-4710-8bde-ec9d28aff1aa/download/consumidores-hipervulnerables.csv |
+| Fecha de descarga | 15/10/2026 |
 | Licencia | Creative Commons Attribution 4.0 (CC BY 4.0), según la ficha del dataset |
 | Última actualización de los datos | 7 de febrero de 2023 (según la ficha) |
 | Archivo | `data/raw/consumidores-hipervulnerables.csv` (sin modificaciones) |
@@ -33,7 +33,7 @@ En este trabajo se usa «reclamo» como equivalente de «denuncia».
 
 ### Proceso de adquisición (por el autor)
 
-El archivo CSV se descargó desde la ficha del dataset en Datos Argentina el `[COMPLETAR fecha]`.
+El archivo CSV se descargó desde la ficha del dataset en Datos Argentina el 15/10/2026.
 
 **Contexto normativo.** La Resolución 139/2020 de la Secretaría de Comercio Interior establece una atención
 prioritaria y especializada para los reclamos de consumidores hipervulnerables presentados ante el COPREC, el
