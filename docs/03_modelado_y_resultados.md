@@ -228,7 +228,7 @@ En ambos escenarios la mayoría de las clases tiene F1 menor a 0,2 y las clases 
   permiten afirmar que algún grupo esté más expuesto a problemas de consumo, ni atribuir causas.
 - Los tres modelos rinden parecido; no hay evidencia para afirmar que uno sea claramente mejor.
 
-**Hipótesis**
+**Hipótesis (no comprobadas)**
 - Que la vulnerabilidad aporte tanto en Salud y transporte aéreo podría deberse a que se asigna a partir de la
   situación que originó el reclamo. Si fuera así, el escenario A **no estaría disponible** al ingresar un reclamo y el
   escenario B sería el realista. Para confirmarlo hay que consultar al organismo.

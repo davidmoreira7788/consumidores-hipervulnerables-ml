@@ -31,8 +31,8 @@ identificador de reclamo ni de persona.
 - **Fuente:** Datos Argentina, Ministerio de Desarrollo Productivo. Programa Consumidores Hipervulnerables.
 - **Ficha del dataset en Datos Argentina:** https://datos.gob.ar/dataset/produccion-programa-consumidores-hipervulnerables
 - **Portal de origen del Ministerio:** https://datos.produccion.gob.ar/dataset/programa-consumidores-hipervulnerables
-- **Enlace de descarga directa del CSV:** https://datos.produccion.gob.ar/dataset/f6f32192-8b0c-4a3a-a40f-0e782b4eea46/resource/b84b8029-1026-4710-8bde-ec9d28aff1aa/download/consumidores-hipervulnerables.csv
-- **Fecha de descarga:** 15/10/2026
+- **Enlace de descarga directa del CSV:** `[COMPLETAR: copiar la dirección del botón «Descargar» de la ficha]`
+- **Fecha de descarga:** `[COMPLETAR]`
 - **Organismo publicador:** Ministerio de Desarrollo Productivo, Dirección Nacional de Defensa del Consumidor y Arbitraje
   del Consumo. Datos de las denuncias de consumidores en la Ventanilla Única Federal de Consumo; el organismo
   detecta qué consumidores son hipervulnerables (Resolución 139/2020).
@@ -93,7 +93,7 @@ ajustados en `models/`. El detalle está en el notebook de preprocesamiento y en
 
 ## Video explicativo
 
-`Por cargar`
+`[COMPLETAR: enlace al video de presentación del proyecto]`
 
 ## Documentación
 
