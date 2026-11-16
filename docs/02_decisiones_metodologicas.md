@@ -13,7 +13,7 @@ y diciembre de 2022. No se afirma que un grupo esté «más expuesto» o «más 
 **Por qué.** El dataset solo contiene personas que reclamaron. No hay información de quienes no reclamaron ni de
 cuántas personas de cada grupo consumen cada servicio.
 
-**Hipótesis, no conclusiones.** Cuando se observa un patrón (por ejemplo, que entre los reclamos de «Salud»
+**Hipótesis** Cuando se observa un patrón (por ejemplo, que entre los reclamos de «Salud»
 predomina el rubro Servicios de Salud), las explicaciones posibles se plantean como hipótesis a confirmar con
 información adicional, no como hechos. Esto se aplica a todo el trabajo (sección 9).
 
